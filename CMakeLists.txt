@@ -1,11 +1,24 @@
 cmake_minimum_required(VERSION 3.14)
 project(userver-samples-chaotic_service CXX)
 
-# /// [find_userver]
-find_package(userver COMPONENTS core chaotic REQUIRED)
-# Note: If userver was added via add_subdirectory(path/to/userver), then
-# the userver_setup_environment() should be called here.
-# /// [find_userver]
+
+# Adding userver dependency
+find_package(userver COMPONENTS core chaotic postgresql QUIET)
+if(NOT userver_FOUND)  # Fallback to subdirectory usage
+    # Compatibility mode: some systems don't support these features
+    set(USERVER_FEATURE_CRYPTOPP_BLAKE2 OFF CACHE BOOL "" FORCE)
+    set(USERVER_FEATURE_GRPC_CHANNELZ OFF CACHE BOOL "" FORCE)
+    set(USERVER_FEATURE_REDIS_HI_MALLOC ON CACHE BOOL "" FORCE)
+
+    if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/third_party/userver)
+        message(STATUS "Using userver framework from third_party/userver")
+        add_subdirectory(third_party/userver)
+    else()
+        message(FATAL_ERROR "Either install the userver or provide a path to it")
+    endif()
+endif()
+
+userver_setup_environment()
 
 # /// [objects]
 add_library(${PROJECT_NAME}_objs OBJECT
